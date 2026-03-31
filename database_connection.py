@@ -1,5 +1,8 @@
 ﻿import pandas as pd
 from sqlalchemy import create_engine
+from logging_config import setup_logger
+
+logger = setup_logger("database")
 
 # 配置区：数据库连接信息
 HOST = '192.168.40.83'
@@ -12,6 +15,7 @@ def get_db_engine():
     """创建并返回数据库引擎对象，用于连接MySQL数据库。"""
     connection_string = f'mysql+pymysql://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}'
     engine = create_engine(connection_string)
+    logger.debug(f"数据库连接成功: {HOST}:{PORT}/{DATABASE}")
     return engine
 
 
@@ -64,18 +68,24 @@ def print_summary(df):
     avg_winrate = df["win_rate_pct"].mean()
     top_hero = df.iloc[0]["hero_name"] if total_heroes > 0 else ""
 
-    print(f"\n统计摘要：")
-    print(f"- 记录中出场过的英雄总数：{total_heroes}")
-    print(f"- 每个英雄的平均胜率：{avg_winrate:.1f}%")
-    print(f"- 胜率最高的英雄：{top_hero}")
+    logger.info(f"\n统计摘要：")
+    logger.info(f"- 记录中出场过的英雄总数：{total_heroes}")
+    logger.info(f"- 每个英雄的平均胜率：{avg_winrate:.1f}%")
+    logger.info(f"- 胜率最高的英雄：{top_hero}")
 
 
 def main():
-    """主流程：加载数据、计算胜率、筛选、导出、打印摘要。"""
-    stats = load_hero_battle_stats()
-    result = filter_and_sort(stats, min_matches=30)
-    export_to_excel(result, filename="hero_winrate.xlsx")
-    print_summary(result)
+    logger.info("开始执行英雄统计分析")
+    try:
+        stats = load_hero_battle_stats()
+        logger.info(f"加载了 {len(stats)} 个英雄的战斗统计")
+        result = filter_and_sort(stats, min_matches=30)
+        logger.info(f"筛选出 {len(result)} 个符合条件的英雄")
+        export_to_excel(result, filename="hero_winrate.xlsx")
+        print_summary(result)
+        logger.info("英雄统计分析完成")
+    except Exception as e:
+        logger.error(f"执行过程中出错: {e}", exc_info=True)
 
 
 if __name__ == "__main__":
