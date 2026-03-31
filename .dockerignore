@@ -1,0 +1,45 @@
+# .dockerignore - 构建镜像时忽略的文件和目录
+# 可以大幅减小镜像大小
+
+# 版本控制
+.git
+.gitignore
+.gitattributes
+
+# IDE和编辑器
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Python缓存和虚拟环境
+__pycache__
+*.py[cod]
+*.egg-info
+.Python
+venv/
+.venv/
+env/
+ENV/
+
+# 日志文件
+*.log
+logs/
+
+# 文档和配置文件（非必要）
+README.md
+DOCKER_README.md
+.env
+.env.example
+
+# 构建输出
+build/
+dist/
+*.egg
+
+# Docker相关（避免递归）
+Dockerfile
+docker-compose.yaml
+.dockerignore

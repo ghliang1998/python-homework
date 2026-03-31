@@ -1,0 +1,109 @@
+# ============================================================
+# docker-compose.yaml - 容器编排配置
+# ============================================================
+# 这个文件定义多个容器服务及其依赖关系，便于一键启动整个应用
+
+version: '3.8'
+
+# 服务定义
+services:
+  # ======== MySQL数据库服务 ========
+  mysql:
+    # 使用官方MySQL 5.7镜像
+    image: mysql:5.7
+    
+    # 容器名称
+    container_name: python_homework_mysql
+    
+    # 重启策略：容器异常退出会自动重启
+    restart: unless-stopped
+    
+    # 环境变量（MySQL初始化配置）
+    environment:
+      MYSQL_HOST_IP: 0.0.0.0
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: homework_db
+      MYSQL_USER: student
+      MYSQL_PASSWORD: mlbb2026
+    
+    # 端口映射：容器内3306 <-> 主机3306
+    ports:
+      - "3306:3306"
+    
+    # 数据卷：持久化MySQL数据（重启后不丢失）
+    volumes:
+      - mysql_data:/var/lib/mysql
+    
+    # 容器网络：与其他服务通信
+    networks:
+      - python_homework_net
+    
+    # 健康检查：验证MySQL是否正常运行
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ======== Python应用服务 ========
+  python_app:
+    # 使用本地Dockerfile构建镜像
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    # 容器名称
+    container_name: python_homework_app
+    
+    # 重启策略
+    restart: unless-stopped
+    
+    # 从.env文件加载环境变量
+    env_file:
+      - .env
+    
+    # 额外的环境变量（覆盖.env中的值）
+    environment:
+      DB_HOST: mysql  # 指向MySQL服务名（容器内通过服务名通信）
+      DB_PORT: 3306
+      DB_USER: student
+      DB_PASSWORD: mlbb2026
+      DB_NAME: homework_db
+    
+    # 数据卷：
+    # 1. 绑定本地项目目录 -> 容器/app（支持实时代码更新）
+    # 2. 绑定日志目录用于持久化
+    volumes:
+      - .:/app
+      - ./logs:/app/logs
+    
+    # 部署策略
+    deploy:
+      # 资源限制防止容器过度占用系统资源
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1024M
+        reservations:
+          cpus: '1'
+          memory: 512M
+    
+    # 依赖关系：等待MySQL服务启动后才启动此应用
+    depends_on:
+      mysql:
+        condition: service_healthy
+    
+    # 容器网络
+    networks:
+      - python_homework_net
+
+# ======== 数据卷定义 ========
+volumes:
+  # MySQL数据卷：存储数据库数据，重启后保留
+  mysql_data:
+    driver: local
+
+# ======== 容器网络定义 ========
+networks:
+  python_homework_net:
+    driver: bridge

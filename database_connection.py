@@ -1,15 +1,16 @@
 ﻿import pandas as pd
+import os
 from sqlalchemy import create_engine
 from logging_config import setup_logger
 
 logger = setup_logger("database")
 
-# 配置区：数据库连接信息
-HOST = '192.168.40.83'
-PORT = 3306
-USER = 'student'
-PASSWORD = 'mlbb2026'
-DATABASE = 'homework_db'
+# 配置区：数据库连接信息（从环境变量读取，失败则使用默认值）
+HOST = os.environ.get('DB_HOST', '192.168.40.83')
+PORT = int(os.environ.get('DB_PORT', '3306'))
+USER = os.environ.get('DB_USER', 'student')
+PASSWORD = os.environ.get('DB_PASSWORD', 'mlbb2026')
+DATABASE = os.environ.get('DB_NAME', 'homework_db')
 
 def get_db_engine():
     """创建并返回数据库引擎对象，用于连接MySQL数据库。"""
